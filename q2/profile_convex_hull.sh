@@ -13,16 +13,16 @@ g++ -pg -g -O2 q2_deque.cpp -o compiled_bins/hull_deque
 generate_test_data() {
     local size=$1
     local filename=$2
-    echo $size > $filename
+    echo $size > "$filename"
     for ((i=0; i<size; i++)); do
-        echo "$RANDOM,$RANDOM" >> $filename
-    }
+        echo "$RANDOM,$RANDOM" >> "$filename"
+    done
 }
 
 # Generate test datasets of different sizes
 TEST_SIZES=(100 1000 10000 100000)
 for size in "${TEST_SIZES[@]}"; do
-    generate_test_data $size "profiling_results/input_${size}.txt"
+    generate_test_data "$size" "profiling_results/input_${size}.txt"
 done
 
 # Function to run valgrind analysis
@@ -31,17 +31,17 @@ run_valgrind() {
     local input_file=$2
     local size=$3
     local impl=$4
-    
+
     echo "Running Valgrind for ${impl} implementation with ${size} points..."
-    
+
     valgrind --tool=massif --massif-out-file="profiling_results/massif_${impl}_${size}.out" \
-        ./$binary < $input_file > /dev/null 2>&1
-    
+        ./"$binary" < "$input_file" > /dev/null 2>&1
+
     ms_print "profiling_results/massif_${impl}_${size}.out" > "profiling_results/memory_${impl}_${size}.txt"
-    
+
     valgrind --tool=callgrind --callgrind-out-file="profiling_results/callgrind_${impl}_${size}.out" \
-        ./$binary < $input_file > /dev/null 2>&1
-        
+        ./"$binary" < "$input_file" > /dev/null 2>&1
+
     callgrind_annotate "profiling_results/callgrind_${impl}_${size}.out" > "profiling_results/cpu_${impl}_${size}.txt"
 }
 
@@ -52,12 +52,12 @@ run_time_benchmark() {
     local size=$3
     local impl=$4
     local iterations=5
-    
+
     echo "Running time benchmark for ${impl} implementation with ${size} points..."
-    
+
     echo "Time measurements for ${impl} (${size} points):" > "profiling_results/time_${impl}_${size}.txt"
     for ((i=1; i<=iterations; i++)); do
-        { time ./$binary < $input_file > /dev/null; } 2>> "profiling_results/time_${impl}_${size}.txt"
+        { time ./"$binary" < "$input_file"; } 2>> "profiling_results/time_${impl}_${size}.txt"
     done
 }
 
@@ -78,20 +78,20 @@ echo "Generating summary report..."
     echo
     echo "Test conducted on $(date)"
     echo
-    
+
     for size in "${TEST_SIZES[@]}"; do
         echo "Dataset size: $size points"
         echo "------------------------"
-        
+
         for impl in "${IMPLEMENTATIONS[@]}"; do
             echo
             echo "${impl} implementation:"
             echo "Peak memory usage (from massif):"
             grep "peak=" "profiling_results/memory_${impl}_${size}.txt" | head -n 1
-            
+
             echo "Execution times:"
             grep "real" "profiling_results/time_${impl}_${size}.txt"
-            
+
             echo "Top 3 hotspots (from callgrind):"
             head -n 20 "profiling_results/cpu_${impl}_${size}.txt" | grep -A 3 "Percent" | tail -n 3
             echo

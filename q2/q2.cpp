@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <chrono> // For measuring execution time
 using namespace std;
 
 struct Point {
@@ -89,19 +90,34 @@ Point parsePoint(const string& str) {
 }
 
 int main() {
+    int n;
+    cin >> n;
+    cin.ignore(); // Consume the newline after n
 
-    vector<Point> points;
-    string line;
-    points.push_back(parsePoint("0,0"));
-    points.push_back(parsePoint("0,1"));
-    points.push_back(parsePoint("1,1"));
-    points.push_back(parsePoint("2,0"));
+    // Replace 'vector<Point>', 'deque<Point>', or 'list<Point>' with the appropriate type for each file
+    std::vector<Point> points;
+    std::string line;
 
-    // Calculate convex hull
-    vector<Point> hull = grahamScan(points);
+    // Read points
+    for (int i = 0; i < n; i++) {
+        std::getline(std::cin, line);
+        points.push_back(parsePoint(line));
+    }
 
-    // Calculate and output area
-    cout << polygonArea(hull) << endl;
+    // Measure the time for convex hull computation
+    auto start = std::chrono::high_resolution_clock::now();
+    auto hull = grahamScan(points);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the area of the convex hull
+    float area = polygonArea(hull);
+
+    // Calculate execution time in milliseconds
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // Output the area and execution time
+    std::cout << area << std::endl;
+    std::cerr << "Execution Time: " << duration << " ms" << std::endl;
 
     return 0;
 }
