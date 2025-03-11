@@ -4,7 +4,7 @@
 
 #include "Reactor.h"
 
-
+#include <iostream>
 
 
 /*
@@ -77,7 +77,38 @@ int removeFdFromReactor(void *reactor, int fd) {
             }
         }
     }
+    std::cout<<"removed client from socket "<<fd<<". max socket is "<<r->max_fd<<"\n";
     return r->max_fd;
+}
+
+int runReactor(void *reactor) {
+    reactor_t* r = (reactor_t*)reactor;
+
+    if (r == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    while (r->running) {
+        fd_set read_fds = r->fds;  // to preserve the master set
+
+        // Wait for activity on one of the sockets
+        if (select(r->max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
+            perror("runReactor: select");
+            return -1;
+        }
+
+        // Check all sockets with activity
+        for (int i = 0; i <= r->max_fd; i++) {
+            if (FD_ISSET(i, &read_fds)) {
+                if (r->r_funcs[i] != NULL) {
+                    r->r_funcs[i](i);  // Call the callback function
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 int stopReactor(void *reactor) {
@@ -92,3 +123,4 @@ int stopReactor(void *reactor) {
     free(r);
     return 0;
 }
+

@@ -88,10 +88,9 @@ void ConvexHullCalculator::commandNewGraph(int n, const std::vector<std::string>
 double ConvexHullCalculator::commandCalculateHull() {
     if (points.empty()) {
         return 0.0;
-    } else {
-        std::vector<Point> hull = grahamScan(points);
-        return calculateArea(hull);
     }
+    std::vector<Point> hull = grahamScan(points);
+    return calculateArea(hull);
 }
 void ConvexHullCalculator::commandAddPoint(const std::string &pointStr) {
     // Remove leading whitespace if present
