@@ -1,28 +1,9 @@
+#include "../include/ch_server_r.hpp"
 /*
 ** ch_server.cpp -- Convex Hull network server
 ** Based on selectserver.c by Beej, integrated with ConvexHullCalculator and Reactor pattern
 */
 
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <string>
-#include <sstream>
-#include <map>
-#include "../utils/ConvexHullCalculator.h"
-#include "Reactor.h"
-
-#define PORT "9034"   // port we're listening on
 
 // Global variables for client state management
 std::map<int, std::vector<std::string>> clientPendingLines;
