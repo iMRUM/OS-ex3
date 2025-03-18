@@ -64,6 +64,7 @@ public:
     // Command: Remove a point from the current graph
     bool commandRemovePoint(const std::string& pointStr);
 
+    std::string processCommand(const std::string& command);
     // Process a command from a string
     std::string processCommand(const std::string& command, std::vector<std::string>& followupLines);
 };

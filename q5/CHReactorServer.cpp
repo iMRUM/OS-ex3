@@ -35,41 +35,43 @@ void handleCommand(int clientfd, const std::string &input_command) {
     std::string response;
     iss >> command;
     if (isWaitingForPoints) {
-        if (command.find(',') != std::string::npos){}
+        if (input_command.find(',') != std::string::npos) {
+            calculator.commandAddPoint(command);
+            isWaitingForPoints--;
+            response = "Point (" + command + ") was added.";
+        }
         else {
-            response = "Invalid point format. Insert point as x, y."
+            response = "Error. Insert point as x, y.";
         }
     }else {
-        if (command == "Newgraph") {//input of n lines!
-            //        std::vector<std::string> points_str_vector;
+        if (command == "Newgraph") {
             int n;
             if (iss >> n) {
                 calculator.commandNewGraph(n);
                 isWaitingForPoints = n;
-                response = "Insert "+ n + " points as x, y. line by line.\n";
-                send(clientfd, response.c_str(), response.size(), 0);
-                for (int i = 0; i<n; i++) {
-                    handleRequest(clientfd);
-                }
+                response = "Insert points as x, y. line by line.\n";
             }else {
                 response = "Invalid Newgraph command. Usage: Newgraph n";
                 send(clientfd, response.c_str(), response.length(), 0);
             }
         }
-        else if (command == "CH") {}
-        else if (command == "Newpoint") {}
-        else if (command == "Removepoint") {}
+        else {
+            response = calculator.processCommand(input_command) + "\n";
+        }
     }
-
+    send(clientfd, response.c_str(), response.length(), 0);
 }
 
 void handleCommandCh(int clientfd) {
+    std::cout << clientfd << std::endl;
 }
 
 void handleCommandAddPoint(int clientfd) {
+    std::cout << clientfd << std::endl;
 }
 
 void handleCommandRmPoint(int clientfd) {
+    std::cout << clientfd << std::endl;
 }
 
 void handleAcceptClient(int listener) {
