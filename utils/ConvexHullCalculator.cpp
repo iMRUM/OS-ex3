@@ -79,6 +79,9 @@ double ConvexHullCalculator::calculateArea(const std::vector<Point> &hull) {
 
     return std::abs(area) / 2.0;
 }
+void ConvexHullCalculator::commandNewGraph(int n) {
+    points.resize(n);
+}
 void ConvexHullCalculator::commandNewGraph(int n, const std::vector<std::string> &pointStrings) {
     points.clear();
     for (int i = 0; i < n && i < pointStrings.size(); ++i) {
@@ -100,6 +103,11 @@ void ConvexHullCalculator::commandAddPoint(const std::string &pointStr) {
     Point newPoint = parsePoint(trimmedStr);
     points.push_back(newPoint);
 }
+
+void ConvexHullCalculator::commandAddPoint(Point new_point) {
+    points.push_back(new_point);
+}
+
 bool ConvexHullCalculator::commandRemovePoint(const std::string &pointStr) {
     // Remove leading whitespace if present
     std::string trimmedStr = pointStr;

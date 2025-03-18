@@ -15,12 +15,61 @@ void *get_in_addr(struct sockaddr *sa) {
 
 void handleRequest(int clientfd) {
     nbytes = recv(clientfd,buf,sizeof(buf),0);
+    if (nbytes<=0) {
+        if (nbytes == 0) {
+            std::cout << "selectserver: socket " << clientfd << " hung up" << std::endl;
+        } else {
+            perror("recv");
+        }
+        close(clientfd);
+        removeFdFromReactor(reactor_p, clientfd);
+        return;
+    }
+    buf[nbytes]='\0';
+    handleCommand(clientfd, buf);
 }
 
-void handleCommand(const std::string &command) {
+void handleCommand(int clientfd, const std::string &input_command) {
+    std::string command;
+    std::istringstream iss(input_command);
+    std::string response;
+    iss >> command;
+    if (isWaitingForPoints) {
+        if (command.find(',') != std::string::npos){}
+        else {
+            response = "Invalid point format. Insert point as x, y."
+        }
+    }else {
+        if (command == "Newgraph") {//input of n lines!
+            //        std::vector<std::string> points_str_vector;
+            int n;
+            if (iss >> n) {
+                calculator.commandNewGraph(n);
+                isWaitingForPoints = n;
+                response = "Insert "+ n + " points as x, y. line by line.\n";
+                send(clientfd, response.c_str(), response.size(), 0);
+                for (int i = 0; i<n; i++) {
+                    handleRequest(clientfd);
+                }
+            }else {
+                response = "Invalid Newgraph command. Usage: Newgraph n";
+                send(clientfd, response.c_str(), response.length(), 0);
+            }
+        }
+        else if (command == "CH") {}
+        else if (command == "Newpoint") {}
+        else if (command == "Removepoint") {}
+    }
+
+}
+
+void handleCommandCh(int clientfd) {
 }
 
 void handleCommandAddPoint(int clientfd) {
+}
+
+void handleCommandRmPoint(int clientfd) {
 }
 
 void handleAcceptClient(int listener) {

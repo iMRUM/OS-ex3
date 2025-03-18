@@ -31,9 +31,12 @@
     // Create a single instance of the convex hull calculator
     ConvexHullCalculator calculator;
     reactor_t* reactor_p;
+    int isWaitingForPoints = 0; //will save number of points in queue
     void handleRequest(int clientfd);
-    void handleCommand(const std::string &command);
-    void handleAddPoint(int clientfd);
+    void handleCommand(int clientfd, const std::string &input_command);
+    void handleCommandAddPoint(int clientfd);
+    void handleCommandRmPoint(int clientfd);
+    void handleCommandCh(int clientfd);
     void handleAcceptClient(int fd);
     void init();
     int run();
