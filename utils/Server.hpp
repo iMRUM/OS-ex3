@@ -100,7 +100,10 @@ protected:
         fdmax = listener; // so far, it's this one
     }
     virtual int run();
-    virtual void stop();
+    virtual void stop() {
+        close(listener);
+        std::cout << "Server stopped" << std::endl;
+    }
 public:
     void start() {
         init();
