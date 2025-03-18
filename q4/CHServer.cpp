@@ -36,8 +36,8 @@ int CHServer::run() {
                         }
 
                         // Initialize client state
-                        clientCommandState[newfd] = 0;
-                        clientPointsNeeded[newfd] = 0;
+                        client_command_state[newfd] = 0;
+                        client_points_needed[newfd] = 0;
 
                         printf("New connection from %s on socket %d\n",
                             inet_ntop(remoteaddr.ss_family,
@@ -61,9 +61,9 @@ int CHServer::run() {
                         }
 
                         // Clean up client data
-                        clientPendingLines.erase(i);
-                        clientCommandState.erase(i);
-                        clientPointsNeeded.erase(i);
+                        client_pending_lines.erase(i);
+                        client_command_state.erase(i);
+                        client_points_needed.erase(i);
 
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
@@ -82,7 +82,7 @@ int CHServer::run() {
                                 line.pop_back();
                             }
 
-                            if (clientCommandState[i] == 0) {
+                            if (client_command_state[i] == 0) {
                                 // Normal command processing mode
                                 if (line.substr(0, 8) == "Newgraph") {
                                     // Extract the number of points
@@ -92,9 +92,9 @@ int CHServer::run() {
                                     iss >> cmd >> n;
 
                                     if (n > 0) {
-                                        clientCommandState[i] = 1;  // Switch to point collection mode
-                                        clientPointsNeeded[i] = n;  // Set the number of points to collect
-                                        clientPendingLines[i].clear();  // Clear any existing points
+                                        client_command_state[i] = 1;  // Switch to point collection mode
+                                        client_points_needed[i] = n;  // Set the number of points to collect
+                                        client_pending_lines[i].clear();  // Clear any existing points
 
                                         // Send acknowledgment
                                         std::string response = "Please enter " + std::to_string(n) + " points, one per line:\n";
@@ -118,32 +118,32 @@ int CHServer::run() {
                                         FD_CLR(i, &master);
 
                                         // Clean up client data
-                                        clientPendingLines.erase(i);
-                                        clientCommandState.erase(i);
-                                        clientPointsNeeded.erase(i);
+                                        client_pending_lines.erase(i);
+                                        client_command_state.erase(i);
+                                        client_points_needed.erase(i);
                                     }
                                 }
-                            } else if (clientCommandState[i] == 1) {
+                            } else if (client_command_state[i] == 1) {
                                 // Collecting points for Newgraph command
-                                clientPendingLines[i].push_back(line);
+                                client_pending_lines[i].push_back(line);
 
-                                if (clientPendingLines[i].size() >= clientPointsNeeded[i]) {
+                                if (client_pending_lines[i].size() >= client_points_needed[i]) {
                                     // We have all points, process the Newgraph command
-                                    calculator.commandNewGraph(clientPointsNeeded[i], clientPendingLines[i]);
+                                    calculator.commandNewGraph(client_points_needed[i], client_pending_lines[i]);
 
                                     // Send confirmation
                                     std::string response = "Graph created with " +
-                                                          std::to_string(clientPointsNeeded[i]) +
+                                                          std::to_string(client_points_needed[i]) +
                                                           " points.\n";
                                     send(i, response.c_str(), response.length(), 0);
 
                                     // Reset client state
-                                    clientCommandState[i] = 0;
-                                    clientPointsNeeded[i] = 0;
-                                    clientPendingLines[i].clear();
+                                    client_command_state[i] = 0;
+                                    client_points_needed[i] = 0;
+                                    client_pending_lines[i].clear();
                                 } else {
                                     // Acknowledge point receipt
-                                    int remaining = clientPointsNeeded[i] - clientPendingLines[i].size();
+                                    int remaining = client_points_needed[i] - client_pending_lines[i].size();
                                     std::string response = "Point received. " +
                                                           std::to_string(remaining) +
                                                           " more point(s) needed.\n";

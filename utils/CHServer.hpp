@@ -12,9 +12,9 @@ protected:
     ConvexHullCalculator calculator;
 
     // Store client state for multi-line commands
-    std::map<int, std::vector<std::string>> clientPendingLines;
-    std::map<int, int> clientCommandState; // 0 = normal, 1 = expecting points for Newgraph
-    std::map<int, int> clientPointsNeeded; // For Newgraph command
+    std::map<int, std::vector<std::string>> client_pending_lines;
+    std::map<int, int> client_command_state; // 0 = normal, 1 = expecting points for Newgraph
+    std::map<int, int> client_points_needed; // For Newgraph command
     int run() override;
     void stop() override;
 };
