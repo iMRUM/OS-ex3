@@ -7,26 +7,26 @@
 // Function to get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+        return &(((struct sockaddr_in *) sa)->sin_addr);
     }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
 }
 
-void CHReactorServer::handleRequest(int fd) {
-    std::cout << "CHReactorServer::handleRequest "<< fd << std::endl;
+void handleRequest(int fd) {
+    std::cout << "CHReactorServer::handleRequest " << fd << std::endl;
 }
 
-void CHReactorServer::handleCommand(int clientfd) {
+void handleCommand(int clientfd) {
 }
 
-void CHReactorServer::handleAddPoint(int clientfd) {
+void handleAddPoint(int clientfd) {
 }
 
-void CHReactorServer::handleAcceptClient(int fd) {
+void handleAcceptClient(int fd) {
 }
 
-void CHReactorServer::init() {
-    int yes=1;        // for setsockopt() SO_REUSEADDR, below
+void init() {
+    int yes = 1; // for setsockopt() SO_REUSEADDR, below
     int i, j, rv, listener;
     struct addrinfo hints, *ai, *p;
     reactorInstance = static_cast<reactor_t *>(startReactor());
@@ -40,7 +40,7 @@ void CHReactorServer::init() {
         exit(1);
     }
 
-    for(p = ai; p != NULL; p = p->ai_next) {
+    for (p = ai; p != NULL; p = p->ai_next) {
         listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listener < 0) {
             continue;
@@ -73,12 +73,12 @@ void CHReactorServer::init() {
     addFdToReactor(reactorInstance, listener, handleAcceptClient);
 }
 
-void CHReactorServer::start() {
+void start() {
 }
 
-int CHReactorServer::run() {
+int run() {
 }
 
-void CHReactorServer::stop() {
+void stop() {
     std::cout << "CHReactorServer::stop " << std::endl;
 }

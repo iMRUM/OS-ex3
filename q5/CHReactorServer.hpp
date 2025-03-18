@@ -20,8 +20,6 @@
 #include "../utils/ConvexHullCalculator.hpp"
 #include "../Reactor/include/Reactor.hpp"
 
-class CHReactorServer{
-private:
     struct sockaddr_storage remoteaddr; // client address
     socklen_t addrlen;
 
@@ -44,9 +42,8 @@ private:
     void init();
     int run();
     void stop();
-    public:
     void start();
-};
+
 
 
 
