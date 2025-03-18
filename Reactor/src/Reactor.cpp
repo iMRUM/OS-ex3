@@ -28,7 +28,7 @@ void * startReactor() {
     reactor->running = 1;
     memset(reactor->r_funcs, 0, sizeof(reactor->r_funcs));
 
-    return (void*)reactor;
+    return reactor;
 }
 
 int addFdToReactor(void *reactor, int fd, reactorFunc func) {

@@ -28,15 +28,11 @@
 
     char remoteIP[INET6_ADDRSTRLEN];
 
-    int yes=1;        // for setsockopt() SO_REUSEADDR, below
-    int i, j, rv;
-
-    struct addrinfo hints, *ai, *p;
     // Create a single instance of the convex hull calculator
     ConvexHullCalculator calculator;
-    reactor_t* reactorInstance;
-    void handleRequest(int fd);
-    void handleCommand(int clientfd);
+    reactor_t* reactor_p;
+    void handleRequest(int clientfd);
+    void handleCommand(const std::string &command);
     void handleAddPoint(int clientfd);
     void handleAcceptClient(int fd);
     void init();

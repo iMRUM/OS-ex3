@@ -12,24 +12,28 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6 *) sa)->sin6_addr);
 }
 
-void handleRequest(int fd) {
-    std::cout << "CHReactorServer::handleRequest " << fd << std::endl;
+
+void handleRequest(int clientfd) {
+    nbytes = recv(clientfd,buf,sizeof(buf),0);
 }
 
-void handleCommand(int clientfd) {
+void handleCommand(const std::string &command) {
 }
 
-void handleAddPoint(int clientfd) {
+void handleCommandAddPoint(int clientfd) {
 }
 
-void handleAcceptClient(int fd) {
+void handleAcceptClient(int listener) {
+    int clientfd = accept(listener, NULL, NULL);
+    addFdToReactor(reactor_p, clientfd, handleRequest);
 }
 
 void init() {
     int yes = 1; // for setsockopt() SO_REUSEADDR, below
     int i, j, rv, listener;
     struct addrinfo hints, *ai, *p;
-    reactorInstance = static_cast<reactor_t *>(startReactor());
+    reactor_p = static_cast<reactor_t *>(startReactor());
+
     // get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -70,13 +74,24 @@ void init() {
         perror("listen");
         exit(3);
     }
-    addFdToReactor(reactorInstance, listener, handleAcceptClient);
+    addFdToReactor(reactor_p, listener, handleAcceptClient);
 }
 
 void start() {
+    init();
+    if(run()) {
+        stop();
+        return;
+    }
+    exit(2);
 }
 
 int run() {
+    if (!runReactor(reactor_p)) {
+        return 1;
+    }
+    fprintf(stderr, "reactor failure: failed to runReactor\n");
+    return 0;
 }
 
 void stop() {
