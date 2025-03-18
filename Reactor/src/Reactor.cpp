@@ -4,7 +4,6 @@
 
 #include "../include/Reactor.hpp"
 
-#include <iostream>
 
 
 /*
@@ -17,9 +16,9 @@
  */
 void * startReactor() {
     reactor_t* reactor = (reactor_t*)malloc(sizeof(reactor_t));
-    if (reactor == NULL) {
+    if (reactor == nullptr) {
         perror("Failed to allocate memory for reactor");
-        return NULL;
+        return nullptr;
     }
 
     // Initialize the reactor structure
@@ -34,7 +33,7 @@ void * startReactor() {
 int addFdToReactor(void *reactor, int fd, reactorFunc func) {
     reactor_t* r = (reactor_t*)reactor;
 
-    if (r == NULL || fd < 0 || fd >= MAX_FDS || func == NULL) {
+    if (r == nullptr || fd < 0 || fd >= MAX_FDS || func == nullptr) {
         errno = EINVAL;
         return -1;
     }
@@ -56,7 +55,7 @@ int addFdToReactor(void *reactor, int fd, reactorFunc func) {
 int removeFdFromReactor(void *reactor, int fd) {
     reactor_t* r = (reactor_t*)reactor;
 
-    if (r == NULL || fd < 0 || fd >= MAX_FDS) {
+    if (r == nullptr || fd < 0 || fd >= MAX_FDS) {
         errno = EINVAL;
         return -1;
     }
@@ -65,7 +64,7 @@ int removeFdFromReactor(void *reactor, int fd) {
     FD_CLR(fd, &r->fds);
 
     // Clear the callback
-    r->r_funcs[fd] = NULL;
+    r->r_funcs[fd] = nullptr;
     // Recalculate max_fd if necessary
     if (fd == r->max_fd) {
         // Start from the previous max_fd and search downward
@@ -84,7 +83,7 @@ int removeFdFromReactor(void *reactor, int fd) {
 int runReactor(void *reactor) {
     reactor_t* r = (reactor_t*)reactor;
 
-    if (r == NULL) {
+    if (r == nullptr) {
         errno = EINVAL;
         return -1;
     }
@@ -93,7 +92,7 @@ int runReactor(void *reactor) {
         fd_set read_fds = r->fds;  // to preserve the master set
 
         // Wait for activity on one of the sockets
-        if (select(r->max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
+        if (select(r->max_fd + 1, &read_fds, nullptr, nullptr, nullptr) == -1) {
             perror("runReactor: select");
             return -1;
         }
@@ -101,7 +100,7 @@ int runReactor(void *reactor) {
         // Check all sockets with activity
         for (int i = 0; i <= r->max_fd; i++) {
             if (FD_ISSET(i, &read_fds)) {
-                if (r->r_funcs[i] != NULL) {
+                if (r->r_funcs[i] != nullptr) {
                     r->r_funcs[i](i);  // Call the callback function
                 }
             }
@@ -113,7 +112,7 @@ int runReactor(void *reactor) {
 
 int stopReactor(void *reactor) {
     reactor_t* r = (reactor_t*)reactor;
-    if (r == NULL) {
+    if (r == nullptr) {
         errno = EINVAL;
         return -1;
     }

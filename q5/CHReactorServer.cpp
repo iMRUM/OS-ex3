@@ -63,7 +63,7 @@ void handleCommand(int clientfd, const std::string &input_command) {
 
 
 void handleAcceptClient(int listener) {
-    int clientfd = accept(listener, NULL, NULL);
+    int clientfd = accept(listener, nullptr, nullptr);
     addFdToReactor(reactor_p, clientfd, handleRequest);
 }
 
@@ -78,12 +78,12 @@ void init() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+    if ((rv = getaddrinfo(nullptr, PORT, &hints, &ai)) != 0) {
         fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
 
-    for (p = ai; p != NULL; p = p->ai_next) {
+    for (p = ai; p != nullptr; p = p->ai_next) {
         listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listener < 0) {
             continue;
@@ -101,7 +101,7 @@ void init() {
     }
 
     // if we got here, it means we didn't get bound
-    if (p == NULL) {
+    if (p == nullptr) {
         fprintf(stderr, "selectserver: failed to bind\n");
         exit(2);
     }
