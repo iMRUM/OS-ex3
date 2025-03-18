@@ -17,8 +17,8 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include "../../utils/ConvexHullCalculator.h"
-#include "Reactor.h"
+#include "../../utils/ConvexHullCalculator.hpp"
+#include "Reactor.hpp"
 #include <string>
 
 

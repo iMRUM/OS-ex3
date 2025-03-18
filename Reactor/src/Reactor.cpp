@@ -2,7 +2,7 @@
 // Created by imry on 3/11/25.
 //
 
-#include "../include/Reactor.h"
+#include "../include/Reactor.hpp"
 
 #include <iostream>
 

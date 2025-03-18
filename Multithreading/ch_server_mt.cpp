@@ -21,7 +21,7 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include "../utils/ConvexHullCalculator.h"
+#include "../utils/ConvexHullCalculator.hpp"
 
 #define PORT "9034"   // port we're listening on
 

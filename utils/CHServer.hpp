@@ -5,7 +5,7 @@
 #ifndef CHSERVER_HPP
 #define CHSERVER_HPP
 #include "Server.hpp"
-#include "ConvexHullCalculator.h"
+#include "ConvexHullCalculator.hpp"
 class CHServer : public Server {
 protected:
     // Create a single instance of the convex hull calculator
