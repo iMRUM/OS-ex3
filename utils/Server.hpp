@@ -18,14 +18,6 @@
 #include <map>
 #define PORT "9034"   // port we're listening on
 
-// Function to get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
 
 class Server {
 protected:
@@ -99,7 +91,7 @@ protected:
         // keep track of the biggest file descriptor
         fdmax = listener; // so far, it's this one
     }
-    virtual int run();
+    virtual int run() = 0;
     virtual void stop() {
         close(listener);
         std::cout << "Server stopped" << std::endl;
