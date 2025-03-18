@@ -11,12 +11,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <vector>
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <sstream>
-#include <map>
+#include <csignal>
 #include "../utils/ConvexHullCalculator.hpp"
 #include "../Reactor/include/Reactor.hpp"
 
@@ -34,9 +33,6 @@
     int isWaitingForPoints = 0; //will save number of points in queue
     void handleRequest(int clientfd);
     void handleCommand(int clientfd, const std::string &input_command);
-    void handleCommandAddPoint(int clientfd);
-    void handleCommandRmPoint(int clientfd);
-    void handleCommandCh(int clientfd);
     void handleAcceptClient(int fd);
     void init();
     int run();

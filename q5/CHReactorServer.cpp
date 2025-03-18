@@ -14,8 +14,8 @@ void *get_in_addr(struct sockaddr *sa) {
 
 
 void handleRequest(int clientfd) {
-    nbytes = recv(clientfd,buf,sizeof(buf),0);
-    if (nbytes<=0) {
+    nbytes = recv(clientfd, buf, sizeof(buf), 0);
+    if (nbytes <= 0) {
         if (nbytes == 0) {
             std::cout << "selectserver: socket " << clientfd << " hung up" << std::endl;
         } else {
@@ -25,7 +25,7 @@ void handleRequest(int clientfd) {
         removeFdFromReactor(reactor_p, clientfd);
         return;
     }
-    buf[nbytes]='\0';
+    buf[nbytes] = '\0';
     handleCommand(clientfd, buf);
 }
 
@@ -39,40 +39,28 @@ void handleCommand(int clientfd, const std::string &input_command) {
             calculator.commandAddPoint(command);
             isWaitingForPoints--;
             response = "Point (" + command + ") was added.";
-        }
-        else {
+        } else {
             response = "Error. Insert point as x, y.";
         }
-    }else {
+    } else {
         if (command == "Newgraph") {
             int n;
             if (iss >> n) {
                 calculator.commandNewGraph(n);
                 isWaitingForPoints = n;
-                response = "Insert points as x, y. line by line.\n";
-            }else {
+                response = "Insert points as x, y. line by line.";
+            } else {
                 response = "Invalid Newgraph command. Usage: Newgraph n";
                 send(clientfd, response.c_str(), response.length(), 0);
             }
-        }
-        else {
-            response = calculator.processCommand(input_command) + "\n";
+        } else {
+            response = calculator.processCommand(input_command);
         }
     }
+    response += "\n";
     send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void handleCommandCh(int clientfd) {
-    std::cout << clientfd << std::endl;
-}
-
-void handleCommandAddPoint(int clientfd) {
-    std::cout << clientfd << std::endl;
-}
-
-void handleCommandRmPoint(int clientfd) {
-    std::cout << clientfd << std::endl;
-}
 
 void handleAcceptClient(int listener) {
     int clientfd = accept(listener, NULL, NULL);
@@ -130,11 +118,9 @@ void init() {
 
 void start() {
     init();
-    if(run()) {
-        stop();
-        return;
+    if (!run()) {
+        exit(2);
     }
-    exit(2);
 }
 
 int run() {
@@ -146,5 +132,43 @@ int run() {
 }
 
 void stop() {
-    std::cout << "CHReactorServer::stop " << std::endl;
+    std::cout << "CHReactorServer::stop - shutting down server" << std::endl;
+    if (reactor_p != nullptr) {
+        stopReactor(reactor_p);
+        reactor_p = nullptr;
+    }
+
+    // Reset the waiting points counter
+    isWaitingForPoints = 0;
+
+    std::cout << "Server shutdown complete" << std::endl;
+}
+
+// Signal handler for graceful shutdown
+void signalHandler(int signum) {
+    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
+    std::cout << "Shutting down server...\n";
+
+    // Call the stop function to clean up resources
+    stop();
+
+    exit(signum);
+}
+
+int main(int argc, char *argv[]) {
+    std::cout << "Starting Convex Hull Reactor Server on port " << PORT << std::endl;
+
+    // Register signal handlers for graceful shutdown
+    signal(SIGINT, signalHandler); // Ctrl+C
+    signal(SIGTERM, signalHandler); // Termination request
+
+    try {
+        // Start the server (this will call init() and run())
+        start();
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
