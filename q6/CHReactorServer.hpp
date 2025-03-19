@@ -19,27 +19,32 @@
 #include "../utils/ConvexHullCalculator.hpp"
 #include "../Reactor/include/Reactor.hpp"
 
-    struct sockaddr_storage remoteaddr; // client address
-    socklen_t addrlen;
+struct sockaddr_storage remoteaddr; // client address
+socklen_t addrlen;
 
-    char buf[256];    // buffer for client data
-    int nbytes;
+char buf[256]; // buffer for client data
+int nbytes;
 
-    char remoteIP[INET6_ADDRSTRLEN];
-
-
-    ConvexHullCalculator calculator;
-    reactor_t* reactor_p;
-    int isWaitingForPoints = 0;
-    void handleRequest(int clientfd);
-    void handleCommand(int clientfd, const std::string &input_command);
-    void handleAcceptClient(int fd);
-    void init();
-    int run();
-    void stop();
-    void start();
+char remoteIP[INET6_ADDRSTRLEN];
 
 
+ConvexHullCalculator calculator;
+reactor_t *reactor_p;
+int isWaitingForPoints = 0;
+
+void handleRequest(int clientfd);
+
+void handleCommand(int clientfd, const std::string &input_command);
+
+void handleAcceptClient(int fd_listener);
+
+void init();
+
+int run();
+
+void stop();
+
+void start();
 
 
 #endif //CHREACTORSERVER_HPP
