@@ -10,74 +10,6 @@ int i, j, rv;
 
 struct addrinfo hints, *ai, *p;
 
-void handleRequest(int clientfd) {
-    if ((nbytes = recv(i, buf, sizeof buf - 1, 0)) <= 0) {
-        // got error or connection closed by client
-        if (nbytes == 0) {
-            // connection closed
-            printf("Socket %d hung up\n", i);
-        } else {
-            perror("recv");
-        }
-        close(i); // bye!
-        FD_CLR(i, &master); // remove from master set
-    }else {
-        buf[nbytes] = '\0';
-        handleCommand(clientfd, buf);
-    }
-
-}
-
-void handleCommand(int clientfd, const std::string &input_command) {
-    std::string command;
-    std::istringstream iss(input_command);
-    std::string response;
-    iss >> command;
-    if (isWaitingForPoints) {
-        if (input_command.find(',') != std::string::npos) {
-            calculator.commandAddPoint(command);
-            isWaitingForPoints--;
-            response = "Point (" + command + ") was added.";
-        } else {
-            response = "Error. Insert point as x, y.";
-        }
-    } else {
-        if (command == "Newgraph") {
-            int n;
-            if (iss >> n) {
-                calculator.commandNewGraph(n);
-                isWaitingForPoints = n;
-                response = "Insert points as x, y. line by line.";
-            } else {
-                response = "Invalid Newgraph command. Usage: Newgraph n";
-                send(clientfd, response.c_str(), response.length(), 0);
-            }
-        } else {
-            response = calculator.processCommand(input_command);
-        }
-    }
-    response += "\n";
-    send(clientfd, response.c_str(), response.length(), 0);
-}
-
-
-void handleAcceptClient(int fd_listener) {
-    addrlen = sizeof remoteaddr;
-    newfd = accept(listener, (struct sockaddr *) &remoteaddr, &addrlen);
-    if (newfd == -1) {
-        perror("accept");
-    } else {
-        FD_SET(newfd, &master); // add to master set
-        if (newfd > fdmax) {
-            // keep track of the max
-            fdmax = newfd;
-        }
-        printf("New connection from %s on socket %d\n",
-               inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr *) &remoteaddr), remoteIP,
-                         INET6_ADDRSTRLEN), newfd);
-    }
-}
-
 void init() {
     FD_ZERO(&master); // clear the master and temp sets
     FD_ZERO(&read_fds);
@@ -177,6 +109,76 @@ void signalHandler(int signum) {
     stop();
 
     exit(signum);
+}
+
+void handleRequest(int clientfd) {
+    char buf[256]; // buffer for client data
+    int nbytes;
+    if ((nbytes = recv(i, buf, sizeof buf - 1, 0)) <= 0) {
+        // got error or connection closed by client
+        if (nbytes == 0) {
+            // connection closed
+            printf("Socket %d hung up\n", i);
+        } else {
+            perror("recv");
+        }
+        close(i); // bye!
+        FD_CLR(i, &master); // remove from master set
+    }else {
+        buf[nbytes] = '\0';
+        handleCommand(clientfd, buf);
+    }
+
+}
+
+void handleCommand(int clientfd, const std::string &input_command) {
+    std::string command;
+    std::istringstream iss(input_command);
+    std::string response;
+    iss >> command;
+    if (isWaitingForPoints) {
+        if (input_command.find(',') != std::string::npos) {
+            calculator.commandAddPoint(command);
+            isWaitingForPoints--;
+            response = "Point (" + command + ") was added.";
+        } else {
+            response = "Error. Insert point as x, y.";
+        }
+    } else {
+        if (command == "Newgraph") {
+            int n;
+            if (iss >> n) {
+                calculator.commandNewGraph(n);
+                isWaitingForPoints = n;
+                response = "Insert points as x, y. line by line.";
+            } else {
+                response = "Invalid Newgraph command. Usage: Newgraph n";
+                send(clientfd, response.c_str(), response.length(), 0);
+            }
+        } else {
+            response = calculator.processCommand(input_command);
+        }
+    }
+    response += "\n";
+    send(clientfd, response.c_str(), response.length(), 0);
+}
+
+
+void handleAcceptClient(int fd_listener) {
+    addrlen = sizeof remoteaddr;
+    newfd = accept(listener, (struct sockaddr *) &remoteaddr, &addrlen);
+    if (newfd == -1) {
+        perror("accept");
+    } else {
+        FD_SET(newfd, &master); // add to master set
+        if (newfd > fdmax) {
+            // keep track of the max
+            fdmax = newfd;
+        }
+        printf("New connection from %s on socket %d\n",
+               inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr *) &remoteaddr), remoteIP,
+                         INET6_ADDRSTRLEN), newfd);
+    }
 }
 
 int main(int argc, char *argv[]) {

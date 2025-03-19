@@ -4,16 +4,10 @@
  *then, the relevant methods will correspond.
  *
  */
-// Function to get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in *) sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
-}
-
 
 void handleRequest(int clientfd) {
+    char buf[256]; // buffer for client data
+    int nbytes;
     nbytes = recv(clientfd, buf, sizeof(buf), 0);
     if (nbytes <= 0) {
         if (nbytes == 0) {

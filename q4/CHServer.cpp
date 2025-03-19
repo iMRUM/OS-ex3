@@ -10,6 +10,8 @@ int i, j, rv;
 struct addrinfo hints, *ai, *p;
 
 void handleRequest(int clientfd) {
+    char buf[256]; // buffer for client data
+    int nbytes;
     if ((nbytes = recv(i, buf, sizeof buf - 1, 0)) <= 0) {
         // got error or connection closed by client
         if (nbytes == 0) {
