@@ -11,17 +11,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <vector>
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <sstream>
-#include <map>
+#include <csignal>
 #include "../utils/ConvexHullCalculator.hpp"
 #include "../Reactor/include/Reactor.hpp"
 
-class CHReactorServer{
-private:
     struct sockaddr_storage remoteaddr; // client address
     socklen_t addrlen;
 
@@ -30,23 +27,18 @@ private:
 
     char remoteIP[INET6_ADDRSTRLEN];
 
-    int yes=1;        // for setsockopt() SO_REUSEADDR, below
-    int i, j, rv;
-
-    struct addrinfo hints, *ai, *p;
     // Create a single instance of the convex hull calculator
     ConvexHullCalculator calculator;
-    reactor_t* reactorInstance;
-    void handleRequest(int fd);
-    void handleCommand(int clientfd);
-    void handleAddPoint(int clientfd);
+    reactor_t* reactor_p;
+    int isWaitingForPoints = 0; //will save number of points in queue
+    void handleRequest(int clientfd);
+    void handleCommand(int clientfd, const std::string &input_command);
     void handleAcceptClient(int fd);
     void init();
     int run();
     void stop();
-    public:
     void start();
-};
+
 
 
 

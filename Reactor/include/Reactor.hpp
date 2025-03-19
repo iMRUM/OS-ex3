@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 /**
  * @brief Function type to be called when a file descriptor is ready
  */
@@ -23,7 +24,7 @@ typedef void (*reactorFunc)(int fd);
  * @brief Reactor structure for managing file descriptors
  */
 #define MAX_FDS 1024  /* Maximum number of file descriptors to manage */
-#define NULL nullptr
+
 
 struct reactor {
     fd_set fds;       /* Master set of file descriptors */
@@ -38,7 +39,7 @@ typedef struct reactor reactor_t;
 /**
  * @brief Creates and starts a new reactor
  *
- * @return pointer to the created reactor or NULL on failure
+ * @return pointer to the created reactor or nullptr on failure
  */
 void* startReactor();
 

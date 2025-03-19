@@ -7,40 +7,83 @@
 // Function to get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+        return &(((struct sockaddr_in *) sa)->sin_addr);
     }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
 }
 
-void CHReactorServer::handleRequest(int fd) {
-    std::cout << "CHReactorServer::handleRequest "<< fd << std::endl;
+
+void handleRequest(int clientfd) {
+    nbytes = recv(clientfd, buf, sizeof(buf), 0);
+    if (nbytes <= 0) {
+        if (nbytes == 0) {
+            std::cout << "selectserver: socket " << clientfd << " hung up" << std::endl;
+        } else {
+            perror("recv");
+        }
+        close(clientfd);
+        removeFdFromReactor(reactor_p, clientfd);
+        return;
+    }
+    buf[nbytes] = '\0';
+    handleCommand(clientfd, buf);
 }
 
-void CHReactorServer::handleCommand(int clientfd) {
+void handleCommand(int clientfd, const std::string &input_command) {
+    std::string command;
+    std::istringstream iss(input_command);
+    std::string response;
+    iss >> command;
+    if (isWaitingForPoints) {
+        if (input_command.find(',') != std::string::npos) {
+            calculator.commandAddPoint(command);
+            isWaitingForPoints--;
+            response = "Point (" + command + ") was added.";
+        } else {
+            response = "Error. Insert point as x, y.";
+        }
+    } else {
+        if (command == "Newgraph") {
+            int n;
+            if (iss >> n) {
+                calculator.commandNewGraph(n);
+                isWaitingForPoints = n;
+                response = "Insert points as x, y. line by line.";
+            } else {
+                response = "Invalid Newgraph command. Usage: Newgraph n";
+                send(clientfd, response.c_str(), response.length(), 0);
+            }
+        } else {
+            response = calculator.processCommand(input_command);
+        }
+    }
+    response += "\n";
+    send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void CHReactorServer::handleAddPoint(int clientfd) {
+
+void handleAcceptClient(int listener) {
+    int clientfd = accept(listener, nullptr, nullptr);
+    addFdToReactor(reactor_p, clientfd, handleRequest);
 }
 
-void CHReactorServer::handleAcceptClient(int fd) {
-}
-
-void CHReactorServer::init() {
-    int yes=1;        // for setsockopt() SO_REUSEADDR, below
+void init() {
+    int yes = 1; // for setsockopt() SO_REUSEADDR, below
     int i, j, rv, listener;
     struct addrinfo hints, *ai, *p;
-    reactorInstance = static_cast<reactor_t *>(startReactor());
+    reactor_p = static_cast<reactor_t *>(startReactor());
+
     // get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+    if ((rv = getaddrinfo(nullptr, PORT, &hints, &ai)) != 0) {
         fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
 
-    for(p = ai; p != NULL; p = p->ai_next) {
+    for (p = ai; p != nullptr; p = p->ai_next) {
         listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listener < 0) {
             continue;
@@ -58,7 +101,7 @@ void CHReactorServer::init() {
     }
 
     // if we got here, it means we didn't get bound
-    if (p == NULL) {
+    if (p == nullptr) {
         fprintf(stderr, "selectserver: failed to bind\n");
         exit(2);
     }
@@ -70,15 +113,62 @@ void CHReactorServer::init() {
         perror("listen");
         exit(3);
     }
-    addFdToReactor(reactorInstance, listener, handleAcceptClient);
+    addFdToReactor(reactor_p, listener, handleAcceptClient);
 }
 
-void CHReactorServer::start() {
+void start() {
+    init();
+    if (!run()) {
+        exit(2);
+    }
 }
 
-int CHReactorServer::run() {
+int run() {
+    if (!runReactor(reactor_p)) {
+        return 1;
+    }
+    fprintf(stderr, "reactor failure: failed to runReactor\n");
+    return 0;
 }
 
-void CHReactorServer::stop() {
-    std::cout << "CHReactorServer::stop " << std::endl;
+void stop() {
+    std::cout << "CHReactorServer::stop - shutting down server" << std::endl;
+    if (reactor_p != nullptr) {
+        stopReactor(reactor_p);
+        reactor_p = nullptr;
+    }
+
+    // Reset the waiting points counter
+    isWaitingForPoints = 0;
+
+    std::cout << "Server shutdown complete" << std::endl;
+}
+
+// Signal handler for graceful shutdown
+void signalHandler(int signum) {
+    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
+    std::cout << "Shutting down server...\n";
+
+    // Call the stop function to clean up resources
+    stop();
+
+    exit(signum);
+}
+
+int main(int argc, char *argv[]) {
+    std::cout << "Starting Convex Hull Reactor Server on port " << PORT << std::endl;
+
+    // Register signal handlers for graceful shutdown
+    signal(SIGINT, signalHandler); // Ctrl+C
+    signal(SIGTERM, signalHandler); // Termination request
+
+    try {
+        // Start the server (this will call init() and run())
+        start();
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }

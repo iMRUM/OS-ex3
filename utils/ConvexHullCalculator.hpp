@@ -49,6 +49,9 @@ public:
     double calculateArea(const std::vector<Point>& hull);
 
     // Command: Create a new graph with n points
+    void commandNewGraph(int n);
+
+    // Command: Create a new graph with n points
     void commandNewGraph(int n, const std::vector<std::string>& pointStrings);
 
     // Command: Calculate and display the convex hull area
@@ -57,9 +60,11 @@ public:
     // Command: Add a new point to the current graph
     void commandAddPoint(const std::string& pointStr);
 
+    void commandAddPoint(Point new_point);
     // Command: Remove a point from the current graph
     bool commandRemovePoint(const std::string& pointStr);
 
+    std::string processCommand(const std::string& command);
     // Process a command from a string
     std::string processCommand(const std::string& command, std::vector<std::string>& followupLines);
 };
