@@ -1,6 +1,6 @@
 #ifndef CHREACTORSERVER_HPP
 #define CHREACTORSERVER_HPP
-#define PORT "9034"   // port we're listening on
+#define PORT "9034"
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -27,10 +27,10 @@
 
     char remoteIP[INET6_ADDRSTRLEN];
 
-    // Create a single instance of the convex hull calculator
+
     ConvexHullCalculator calculator;
     reactor_t* reactor_p;
-    int isWaitingForPoints = 0; //will save number of points in queue
+    int isWaitingForPoints = 0;
     void handleRequest(int clientfd);
     void handleCommand(int clientfd, const std::string &input_command);
     void handleAcceptClient(int fd);
