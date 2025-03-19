@@ -1,21 +1,10 @@
-#include <functional>
-#include <map>
-#include <mutex>
-#include <thread>
+#include <pthread.h>
+#include <cstdio>
+#include <unistd.h>
+#include <sys/socket.h>
 
-using std::function;
-using std::mutex;
-using std::thread;
-
-typedef  std::function<void*(int, std::mutex&)> proactorFunc;
-
-class proactor {
-private:
-    std::mutex mtx;
-    std::thread eventLoopThread;
-
-public:
-    void start_proactor(int listener, proactorFunc client_handler);
-    void stop_proactor();
-    ~proactor();
-};
+typedef void* (*proactorFunc) (void* sockfd);
+// starts new proactor and returns proactor thread id. 
+pthread_t startProactor (int* sockfd, proactorFunc threadFunc);
+// stops proactor by threadid 
+int stopProactor(pthread_t tid);

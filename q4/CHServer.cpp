@@ -62,8 +62,10 @@ void handleCommand(int clientfd, const std::string &input_command) {
 
 
 void handleAcceptClient(int fd_listener) {
+    struct sockaddr_storage remoteaddr; // client address
+    socklen_t addrlen;
     int newfd; // newly accept()ed socket descriptor
-    addrlen = sizeof remoteaddr;
+    addrlen = sizeof(remoteaddr);
     newfd = accept(fd_listener, (struct sockaddr *) &remoteaddr, &addrlen);
     if (newfd == -1) {
         perror("accept");
