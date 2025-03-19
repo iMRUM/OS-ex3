@@ -1,5 +1,5 @@
 #include "temp_server.hpp"
-
+/*
 fd_set master; // master file descriptor list
 fd_set read_fds; // temp file descriptor list for select()
 int fdmax; // maximum file descriptor number
@@ -198,3 +198,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+*/

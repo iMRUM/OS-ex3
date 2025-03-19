@@ -17,20 +17,14 @@
 #include <sstream>
 #include <csignal>
 
-void *get_in_addr(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in *) sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
-}
 
 struct sockaddr_storage remoteaddr; // client address
 socklen_t addrlen;
 
 
-
 char remoteIP[INET6_ADDRSTRLEN];
 
+void *get_in_addr(struct sockaddr *sa);
 
 void handleRequest(int clientfd);
 
@@ -46,5 +40,21 @@ void stop();
 
 void start();
 
+void *get_in_addr(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in *) sa)->sin_addr);
+    }
+    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
+}
 
+// Signal handler for graceful shutdown
+void signalHandler(int signum) {
+    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
+    std::cout << "Shutting down server...\n";
+
+    // Call the stop function to clean up resources
+    stop();
+
+    exit(signum);
+}
 #endif //TEMP_SERVER_HPP

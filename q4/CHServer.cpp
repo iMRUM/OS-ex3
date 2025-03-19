@@ -3,25 +3,24 @@ fd_set master; // master file descriptor list
 fd_set read_fds; // temp file descriptor list for select()
 int fdmax; // maximum file descriptor number
 int listener; // listening socket descriptor
-int newfd; // newly accept()ed socket descriptor
-int yes = 1; // for setsockopt() SO_REUSEADDR, below
-int i, j, rv;
+
+
 
 struct addrinfo hints, *ai, *p;
 
 void handleRequest(int clientfd) {
     char buf[256]; // buffer for client data
     int nbytes;
-    if ((nbytes = recv(i, buf, sizeof buf - 1, 0)) <= 0) {
+    if ((nbytes = recv(clientfd, buf, sizeof buf - 1, 0)) <= 0) {
         // got error or connection closed by client
         if (nbytes == 0) {
             // connection closed
-            printf("Socket %d hung up\n", i);
+            printf("Socket %d hung up\n", clientfd);
         } else {
             perror("recv");
         }
-        close(i); // bye!
-        FD_CLR(i, &master); // remove from master set
+        close(clientfd); // bye!
+        FD_CLR(clientfd, &master); // remove from master set
     }else {
         buf[nbytes] = '\0';
         handleCommand(clientfd, buf);
@@ -63,6 +62,7 @@ void handleCommand(int clientfd, const std::string &input_command) {
 
 
 void handleAcceptClient(int fd_listener) {
+    int newfd; // newly accept()ed socket descriptor
     addrlen = sizeof remoteaddr;
     newfd = accept(fd_listener, (struct sockaddr *) &remoteaddr, &addrlen);
     if (newfd == -1) {
@@ -82,7 +82,8 @@ void handleAcceptClient(int fd_listener) {
 void init() {
     FD_ZERO(&master); // clear the master and temp sets
     FD_ZERO(&read_fds);
-
+    int rv;
+    int yes = 1; // for setsockopt() SO_REUSEADDR, below
     // get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -132,6 +133,7 @@ void init() {
 }
 
 int run() {
+    int i;
     std::cout << "Convex Hull server started on port " << PORT << std::endl;
     std::cout << "Waiting for connections..." << std::endl;
     for (;;) {
@@ -169,19 +171,9 @@ void stop() {
     std::cout << "Server shutdown complete" << std::endl;
 }
 
-// Signal handler for graceful shutdown
-void signalHandler(int signum) {
-    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
-    std::cout << "Shutting down server...\n";
-
-    // Call the stop function to clean up resources
-    stop();
-
-    exit(signum);
-}
 
 int main(int argc, char *argv[]) {
-    std::cout << "Starting Convex Hull Reactor Server on port " << PORT << std::endl;
+    std::cout << "Starting Convex Hull Server on port " << PORT << std::endl;
 
     // Register signal handlers for graceful shutdown
     signal(SIGINT, signalHandler); // Ctrl+C
