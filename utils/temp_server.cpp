@@ -1,32 +1,31 @@
-#include "CHReactorServer.hpp"
-/*
- *When client is accepted with unique fd, its corresponding reactorFuncd[fd] is set to handleCommand.
- *then, the relevant methods will correspond.
- *
- */
-// Function to get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in *) sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6 *) sa)->sin6_addr);
-}
+#include "temp_server.hpp"
 
+fd_set master; // master file descriptor list
+fd_set read_fds; // temp file descriptor list for select()
+int fdmax; // maximum file descriptor number
+int listener; // listening socket descriptor
+int newfd; // newly accept()ed socket descriptor
+int yes = 1; // for setsockopt() SO_REUSEADDR, below
+int i, j, rv;
+
+struct addrinfo hints, *ai, *p;
 
 void handleRequest(int clientfd) {
-    nbytes = recv(clientfd, buf, sizeof(buf), 0);
-    if (nbytes <= 0) {
+    if ((nbytes = recv(i, buf, sizeof buf - 1, 0)) <= 0) {
+        // got error or connection closed by client
         if (nbytes == 0) {
-            std::cout << "selectserver: socket " << clientfd << " hung up" << std::endl;
+            // connection closed
+            printf("Socket %d hung up\n", i);
         } else {
             perror("recv");
         }
-        close(clientfd);
-        removeFdFromReactor(reactor_p, clientfd);
-        return;
+        close(i); // bye!
+        FD_CLR(i, &master); // remove from master set
+    }else {
+        buf[nbytes] = '\0';
+        handleCommand(clientfd, buf);
     }
-    buf[nbytes] = '\0';
-    handleCommand(clientfd, buf);
+
 }
 
 void handleCommand(int clientfd, const std::string &input_command) {
@@ -63,27 +62,37 @@ void handleCommand(int clientfd, const std::string &input_command) {
 
 
 void handleAcceptClient(int fd_listener) {
-    int clientfd = accept(fd_listener, nullptr, nullptr);
-    addFdToReactor(reactor_p, clientfd, handleRequest);
+    addrlen = sizeof remoteaddr;
+    newfd = accept(listener, (struct sockaddr *) &remoteaddr, &addrlen);
+    if (newfd == -1) {
+        perror("accept");
+    } else {
+        FD_SET(newfd, &master); // add to master set
+        if (newfd > fdmax) {
+            // keep track of the max
+            fdmax = newfd;
+        }
+        printf("New connection from %s on socket %d\n",
+               inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr *) &remoteaddr), remoteIP,
+                         INET6_ADDRSTRLEN), newfd);
+    }
 }
 
 void init() {
-    int yes = 1; // for setsockopt() SO_REUSEADDR, below
-    int i, j, rv, listener;
-    struct addrinfo hints, *ai, *p;
-    reactor_p = static_cast<reactor_t *>(startReactor());
+    FD_ZERO(&master); // clear the master and temp sets
+    FD_ZERO(&read_fds);
 
     // get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(nullptr, PORT, &hints, &ai)) != 0) {
+    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
         fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
 
-    for (p = ai; p != nullptr; p = p->ai_next) {
+    for (p = ai; p != NULL; p = p->ai_next) {
         listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listener < 0) {
             continue;
@@ -101,7 +110,7 @@ void init() {
     }
 
     // if we got here, it means we didn't get bound
-    if (p == nullptr) {
+    if (p == NULL) {
         fprintf(stderr, "selectserver: failed to bind\n");
         exit(2);
     }
@@ -113,7 +122,36 @@ void init() {
         perror("listen");
         exit(3);
     }
-    addFdToReactor(reactor_p, listener, handleAcceptClient);
+
+    // add the listener to the master set
+    FD_SET(listener, &master);
+
+    // keep track of the biggest file descriptor
+    fdmax = listener; // so far, it's this one
+}
+
+int run() {
+    std::cout << "Convex Hull server started on port " << PORT << std::endl;
+    std::cout << "Waiting for connections..." << std::endl;
+    for (;;) {
+        read_fds = master; // copy it
+        if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+            perror("select");
+            exit(4);
+        }
+        // run through the existing connections looking for data to read
+        for (i = 0; i <= fdmax; i++) {
+            if (FD_ISSET(i, &read_fds)) {
+                // we got one!!
+                if (i == listener) {
+                    handleAcceptClient(i);
+                }else {
+                    handleRequest(i);
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 void start() {
@@ -123,21 +161,7 @@ void start() {
     }
 }
 
-int run() {
-    if (!runReactor(reactor_p)) {
-        return 1;
-    }
-    fprintf(stderr, "reactor failure: failed to runReactor\n");
-    return 0;
-}
-
 void stop() {
-    std::cout << "CHReactorServer::stop - shutting down server" << std::endl;
-    if (reactor_p != nullptr) {
-        stopReactor(reactor_p);
-        reactor_p = nullptr;
-    }
-
     // Reset the waiting points counter
     isWaitingForPoints = 0;
 

@@ -16,6 +16,7 @@
 #include <string>
 #include <sstream>
 #include <csignal>
+#include "../utils/ConvexHullCalculator.hpp"
 
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
@@ -32,6 +33,9 @@ int nbytes;
 
 char remoteIP[INET6_ADDRSTRLEN];
 
+
+ConvexHullCalculator calculator;
+int isWaitingForPoints = 0;
 
 void handleRequest(int clientfd);
 
