@@ -171,19 +171,9 @@ void stop() {
     std::cout << "Server shutdown complete" << std::endl;
 }
 
-// Signal handler for graceful shutdown
-void signalHandler(int signum) {
-    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
-    std::cout << "Shutting down server...\n";
-
-    // Call the stop function to clean up resources
-    stop();
-
-    exit(signum);
-}
 
 int main(int argc, char *argv[]) {
-    std::cout << "Starting Convex Hull Reactor Server on port " << PORT << std::endl;
+    std::cout << "Starting Convex Hull Server on port " << PORT << std::endl;
 
     // Register signal handlers for graceful shutdown
     signal(SIGINT, signalHandler); // Ctrl+C
