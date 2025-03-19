@@ -28,7 +28,6 @@ struct sockaddr_storage remoteaddr; // client address
 socklen_t addrlen;
 
 
-
 char remoteIP[INET6_ADDRSTRLEN];
 
 
