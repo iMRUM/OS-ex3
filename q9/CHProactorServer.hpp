@@ -1,5 +1,5 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef CHPROACTORSERVER_HPP
+#define CHPROACTORSERVER_HPP
 #define PORT "9034"
 #include <iostream>
 #include <cstdio>
@@ -16,8 +16,9 @@
 #include <string>
 #include <sstream>
 #include <csignal>
-
-
+#include "../utils/ConvexHullCalculator.hpp"
+ConvexHullCalculator calculator;
+int isWaitingForPoints = 0;
 struct sockaddr_storage remoteaddr; // client address
 socklen_t addrlen;
 
@@ -26,11 +27,11 @@ char remoteIP[INET6_ADDRSTRLEN];
 
 void *get_in_addr(struct sockaddr *sa);
 
-void handleRequest(int clientfd);
+void handleRequest(void* arg);
 
 void handleCommand(int clientfd, const std::string &input_command);
 
-void handleAcceptClient(int fd_listener);
+void handleAcceptClient(void* arg);
 
 void init();
 
@@ -57,4 +58,5 @@ void signalHandler(int signum) {
 
     exit(signum);
 }
-#endif //SERVER_HPP
+
+#endif //CHPROACTORSERVER_HPP

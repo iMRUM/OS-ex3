@@ -1,8 +1,9 @@
-#include "CHMtServer.hpp"
-
+#include "CHProactorServer.hpp"
+#include "../Proactor/include/Proactor.hpp"
 int listener;
 int isRunning = 0;
-std::mutex mtx;
+
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 void init() {
     int yes = 1; // for setsockopt() SO_REUSEADDR, below
@@ -53,9 +54,9 @@ void init() {
 
 int run() {
     isRunning = 1;
-    std::thread accept_thread(handleAcceptClient, listener);
-    accept_thread.detach();
-    std::cout << "accepting-thread, ID: " << accept_thread.get_id() << " started.\n" << std::endl;
+    pthread_t accept_thread = startProactor(&listener, proactorFunc(handleAcceptClient));
+    pthread_detach(accept_thread);
+    std::cout << "accepting-thread, Address: " << &accept_thread << " started.\n" << std::endl;
     return 1;
 }
 
@@ -70,7 +71,8 @@ void start() {
     run();
 }
 
-void handleRequest(int clientfd) {
+void handleRequest(void* arg) {
+    int clientfd = *(int*)arg;
     char buf[256]; // buffer for client data
     int nbytes;
     while (isRunning) {
@@ -85,11 +87,12 @@ void handleRequest(int clientfd) {
             break;
         }
         buf[nbytes] = '\0';
-        mtx.lock();
+        pthread_mutex_lock(&mtx);
         handleCommand(clientfd, buf);
-        mtx.unlock();
+        pthread_mutex_unlock(&mtx);
     }
     close(clientfd); // bye!
+
 }
 
 void handleCommand(int clientfd, const std::string &input_command) {
@@ -125,7 +128,8 @@ void handleCommand(int clientfd, const std::string &input_command) {
 }
 
 
-void handleAcceptClient(int fd_listener) {
+void handleAcceptClient(void* arg) {
+    int fd_listener = *(int*)arg;
     std::cout << "Accepted connection THREAD, listening on socket " << fd_listener << std::endl;
     int newfd;
     addrlen = sizeof(remoteaddr);
@@ -134,25 +138,23 @@ void handleAcceptClient(int fd_listener) {
             perror("accept");
             continue;
         }
-        std::thread client_thread(handleRequest, newfd);
-        client_thread.detach();
-        std::cout << "client-thread, ID: " << client_thread.get_id() << " started with socket" << newfd << "\n" <<
+        pthread_t client_thread = startProactor(&newfd, proactorFunc(handleRequest));
+        pthread_detach(client_thread);
+        std::cout << "client-thread, address: " << &client_thread << " started with socket" << newfd << "\n" <<
                 std::endl;
     }
 }
 
 int main() {
-    std::cout << "Starting Convex Hull Multithreading Server on port " << PORT << std::endl;
-
-    // Register signal handlers for graceful shutdown
-    signal(SIGINT, signalHandler); // Ctrl+C
-    signal(SIGTERM, signalHandler); // Termination request
-
+    std::cout << "Starting Convex Hull Proactor Server on port " << PORT << std::endl;
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
     try {
         start();
         while (isRunning) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            sleep(1);
         }
+
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
